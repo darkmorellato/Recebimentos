@@ -1,0 +1,1654 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Relatório de Despesas Miplace - Equipe Global V2</title>
+    
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: { sans: ['Inter', 'sans-serif'] },
+                    colors: {
+                        neu: {
+                            bg: '#e0e5ec',
+                            dark: '#a3b1c6',
+                            light: '#ffffff',
+                            accent: '#3B82F6',
+                            text: '#475569'
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+    
+    <script crossorigin src="https://unpkg.com/react@18/umd/react.development.js"></script>
+    <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+
+    <!-- FIREBASE COMPAT LIBRARIES -->
+    <script src="https://www.gstatic.com/firebasejs/10.13.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.13.0/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.13.0/firebase-firestore-compat.js"></script>
+
+    <style>
+        :root {
+            --neu-bg: #e0e5ec;
+            --neu-light: #ffffff;
+            --neu-dark: #a3b1c6;
+            --accent: #3B82F6;
+        }
+
+        body { 
+            background-color: var(--neu-bg);
+            color: #475569;
+            -webkit-font-smoothing: antialiased;
+        }
+        
+        input[type=number] { -moz-appearance: textfield; }
+        input::-webkit-calendar-picker-indicator { cursor: pointer; opacity: 0.6; }
+        
+        ::-webkit-scrollbar { width: 8px; height: 8px; }
+        ::-webkit-scrollbar-track { background: var(--neu-bg); }
+        ::-webkit-scrollbar-thumb { 
+            background: var(--neu-dark); 
+            border-radius: 10px; 
+            border: 2px solid var(--neu-bg);
+        }
+
+        /* --- NEUMORPHISM CSS --- */
+        .neu-panel {
+            background: var(--neu-bg);
+            box-shadow: 9px 9px 16px var(--neu-dark), -9px -9px 16px var(--neu-light);
+            border-radius: 24px;
+            border: none;
+        }
+
+        .neu-input {
+            background: var(--neu-bg);
+            box-shadow: inset 5px 5px 10px var(--neu-dark), inset -5px -5px 10px var(--neu-light);
+            border: none;
+            outline: none;
+            transition: all 0.2s ease;
+        }
+        .neu-input:focus {
+            box-shadow: inset 7px 7px 14px var(--neu-dark), inset -7px -7px 14px var(--neu-light);
+        }
+
+        .neu-btn {
+            background: var(--neu-bg);
+            box-shadow: 6px 6px 12px var(--neu-dark), -6px -6px 12px var(--neu-light);
+            border: none;
+            transition: all 0.2s ease;
+            cursor: pointer;
+        }
+        .neu-btn:hover {
+            box-shadow: 8px 8px 16px var(--neu-dark), -8px -8px 16px var(--neu-light);
+        }
+        .neu-btn:active, .neu-active {
+            box-shadow: inset 5px 5px 10px var(--neu-dark), inset -5px -5px 10px var(--neu-light) !important;
+            color: var(--accent) !important;
+        }
+
+        .neu-btn-primary {
+            background: var(--accent);
+            box-shadow: 6px 6px 16px rgba(59, 130, 246, 0.4), -6px -6px 16px var(--neu-light);
+            border: none;
+            color: white;
+            transition: all 0.2s ease;
+            cursor: pointer;
+        }
+        .neu-btn-primary:active {
+            box-shadow: inset 4px 4px 8px rgba(0, 0, 0, 0.2);
+            transform: scale(0.98);
+        }
+
+        .neu-progress-track {
+            background: var(--neu-bg);
+            box-shadow: inset 4px 4px 8px var(--neu-dark), inset -4px -4px 8px var(--neu-light);
+            border-radius: 9999px;
+            overflow: visible;
+            position: relative;
+        }
+        .neu-progress-fill {
+            background: linear-gradient(90deg, #60A5FA, #3B82F6);
+            height: 100%;
+            border-radius: 9999px;
+            box-shadow: 0 4px 10px rgba(59, 130, 246, 0.4);
+            position: relative;
+        }
+        .neu-progress-knob {
+            width: 16px;
+            height: 16px;
+            background: #fff;
+            border: 4px solid #3B82F6;
+            border-radius: 50%;
+            position: absolute;
+            right: -8px;
+            top: 50%;
+            transform: translateY(-50%);
+            box-shadow: 2px 2px 5px rgba(0,0,0,0.2);
+        }
+
+        .fade-in { animation: fadeIn 0.4s ease-out; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+        
+        /* Estilos Aprimorados para Impressão */
+        @media print {
+            .no-print { display: none !important; }
+            body { background: white !important; }
+            .neu-panel, .neu-btn, .neu-input { 
+                background: white !important; 
+                box-shadow: none !important; 
+                border: 1px solid #ddd !important;
+                color: black !important;
+            }
+            table { width: 100% !important; table-layout: auto !important; }
+            tr { break-inside: avoid; page-break-inside: avoid; } 
+            td, th { padding: 4px 2px !important; color: black !important; border-bottom: 1px solid #ddd;}
+        }
+    </style>
+</head>
+<body class="antialiased">
+    <div id="root"></div>
+
+    <script type="text/babel">
+        // --- FIREBASE SETUP ---
+        const envConfig = typeof __firebase_config !== 'undefined' ? JSON.parse(__firebase_config) : null;
+        const envAppId = typeof __app_id !== 'undefined' ? __app_id : 'miplace-despesas-default';
+        
+        const userConfig = {
+            apiKey: "AIzaSyBNEa_4nybuHsRtx0i5B7gk0hrAWUsNYWo",
+            authDomain: "recebimentos-payjoy-crefaz.firebaseapp.com",
+            projectId: "recebimentos-payjoy-crefaz",
+            storageBucket: "recebimentos-payjoy-crefaz.firebasestorage.app",
+            messagingSenderId: "473503465969",
+            appId: "1:473503465969:web:8fc6c0a1372b39752c4450",
+            measurementId: "G-4RB54BKDK2"
+        };
+        
+        const firebaseConfig = envConfig || userConfig;
+        
+        if (!firebase.apps.length) {
+            firebase.initializeApp(firebaseConfig);
+        }
+        
+        const db = firebase.firestore();
+        const auth = firebase.auth();
+
+        const { useState, useEffect, useMemo, useRef } = React;
+
+        // --- ICONS ---
+        const Icon = ({ path, className }) => (
+            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className} dangerouslySetInnerHTML={{ __html: path }} />
+        );
+
+        const Icons = {
+            Plus: (props) => <Icon {...props} path='<line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line>' />,
+            Edit: (props) => <Icon {...props} path='<path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path>' />,
+            Trash2: (props) => <Icon {...props} path='<polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path><line x1="10" y1="11" x2="10" y2="17"></line><line x1="14" y1="11" x2="14" y2="17"></line>' />,
+            Download: (props) => <Icon {...props} path='<path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line>' />,
+            Settings: (props) => <Icon {...props} path='<circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path>' />,
+            FileSpreadsheet: (props) => <Icon {...props} path='<path d="M14.5 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7.5L14.5 2z"></path><polyline points="14 2 14 8 20 8"></polyline><path d="M8 13h2"></path><path d="M8 17h2"></path><path d="M14 13h2"></path><path d="M14 17h2"></path>' />,
+            Calendar: (props) => <Icon {...props} path='<rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line><line x1="3" y1="10" x2="21" y2="10"></line>' />,
+            Tag: (props) => <Icon {...props} path='<path d="M20.59 13.41l-7.17 7.17a2 2 0 0 1-2.83 0L2 12V2h10l8.59 8.59a2 2 0 0 1 0 2.82z"></path><line x1="7" y1="7" x2="7.01" y2="7"></line>' />,
+            User: (props) => <Icon {...props} path='<path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle>' />,
+            DollarSign: (props) => <Icon {...props} path='<line x1="12" y1="1" x2="12" y2="23"></line><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"></path>' />,
+            Store: (props) => <Icon {...props} path='<path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path><polyline points="9 22 9 12 15 12 15 22"></polyline>' />,
+            Printer: (props) => <Icon {...props} path='<polyline points="6 9 6 2 18 2 18 9"></polyline><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"></path><rect x="6" y="14" width="12" height="8"></rect>' />,
+            Check: (props) => <Icon {...props} path='<polyline points="20 6 9 17 4 12"></polyline>' />,
+            X: (props) => <Icon {...props} path='<line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line>' />,
+            AlertCircle: (props) => <Icon {...props} path='<circle cx="12" cy="12" r="10"></circle><line x1="12" y1="8" x2="12" y2="12"></line><line x1="12" y1="16" x2="12.01" y2="16"></line>' />,
+            Save: (props) => <Icon {...props} path='<path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"></path><polyline points="17 21 17 13 7 13 7 21"></polyline><polyline points="7 3 7 8 15 8"></polyline>' />,
+            CloudUpload: (props) => <Icon {...props} path='<path d="M18 10h-1.26A8 8 0 1 0 9 20h9a5 5 0 0 0 0-10z"></path><polyline points="16 16 12 12 8 16"></polyline><line x1="12" y1="12" x2="12" y2="21"></line>' />,
+            Upload: (props) => <Icon {...props} path='<path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="17 8 12 3 7 8"></polyline><line x1="12" y1="3" x2="12" y2="15"></line>' />,
+            AlertTriangle: (props) => <Icon {...props} path='<path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"></path><line x1="12" y1="9" x2="12" y2="13"></line><line x1="12" y1="17" x2="12.01" y2="17"></line>' />,
+            Search: (props) => <Icon {...props} path='<circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line>' />,
+            Copy: (props) => <Icon {...props} path='<rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>' />,
+            Home: (props) => <Icon {...props} path='<path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path><polyline points="9 22 9 12 15 12 15 22"></polyline>' />,
+            ChevronLeft: (props) => <Icon {...props} path='<polyline points="15 18 9 12 15 6"></polyline>' />,
+            ChevronRight: (props) => <Icon {...props} path='<polyline points="9 18 15 12 9 6"></polyline>' />,
+            WifiOff: (props) => <Icon {...props} path='<line x1="1" y1="1" x2="23" y2="23"></line><path d="M16.72 11.06A10.94 10.94 0 0 1 19 12.55"></path><path d="M5 12.55a10.94 10.94 0 0 1 5.17-2.39"></path><path d="M10.71 5.05A16 16 0 0 1 22.58 9"></path><path d="M1.42 9a15.91 15.91 0 0 1 4.7-2.88"></path><path d="M8.53 16.11a6 6 0 0 1 6.95 0"></path><line x1="12" y1="20" x2="12.01" y2="20"></line>' />,
+            Globe: (props) => <Icon {...props} path='<circle cx="12" cy="12" r="10"></circle><line x1="2" y1="12" x2="22" y2="12"></line><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1 4-10z"></path>' />,
+            Wallet: (props) => <Icon {...props} path='<path d="M20 12V8H6a2 2 0 01-2-2c0-1.1.9-2 2-2h12v4"/><path d="M4 6v12c0 1.1.9 2 2 2h14v-4H6a2 2 0 01-2-2z"/>' />,
+            Chart: (props) => <Icon {...props} path='<line x1="12" y1="20" x2="12" y2="10"></line><line x1="18" y1="20" x2="18" y2="4"></line><line x1="6" y1="20" x2="6" y2="16"></line>' />,
+            HardDrive: (props) => <Icon {...props} path='<line x1="22" y1="12" x2="2" y2="12"></line><path d="M5.45 5.11L2 12v6a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-6l-3.45-6.89A2 2 0 0 0 16.76 4H7.24a2 2 0 0 0-1.79 1.11z"></path><line x1="6" y1="16" x2="6.01" y2="16"></line><line x1="10" y1="16" x2="10.01" y2="16"></line>' />
+        };
+
+        // --- CONSTANTS ---
+        const CATEGORIES_LIST = [
+            "Recebimento Payjoy", "Recebimento Crefaz"
+        ].sort();
+
+        const STORES_LIST = [
+            "Dom Pedro II", "Realme", "Xv de Novembro", "Premium", "Kassouf"
+        ];
+
+        const STORE_IMAGES = {
+            "Dom Pedro II": "dompedro.png",
+            "Realme": "realme.png",
+            "Xv de Novembro": "xv.png",
+            "Premium": "premium.png",
+            "Kassouf": "kassouf.png",
+            "default": "image_6.png"
+        };
+
+        const DEFAULT_SETTINGS = {
+            employeeName: "Seu Nome",
+            currency: "R$",
+            categories: CATEGORIES_LIST.map(cat => ({ label: cat, odooRef: cat }))
+        };
+
+        // --- UTILS ---
+        const getTodayLocal = () => {
+            const d = new Date();
+            const year = d.getFullYear();
+            const month = String(d.getMonth() + 1).padStart(2, '0');
+            const day = String(d.getDate()).padStart(2, '0');
+            return `${year}-${month}-${day}`;
+        };
+
+        const formatDateBR = (dateString) => {
+            if (!dateString) return "";
+            const [year, month, day] = dateString.split('-');
+            return `${day}/${month}/${year}`;
+        };
+
+        const formatMonthBR = (yearMonth) => {
+            if (!yearMonth) return "";
+            const [year, month] = yearMonth.split('-');
+            const date = new Date(parseInt(year), parseInt(month) - 1, 1);
+            const monthName = date.toLocaleDateString('pt-BR', { month: 'long' });
+            return `${monthName.charAt(0).toUpperCase() + monthName.slice(1)} ${year}`;
+        };
+
+        const formatCurrency = (value) => {
+            return new Intl.NumberFormat('pt-BR', { style: 'decimal', minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(value);
+        };
+
+        const getStoreLogo = (storeName, className = "w-6 h-6") => {
+             const src = STORE_IMAGES[storeName] || STORE_IMAGES["default"];
+             return (
+                 <img 
+                    src={src} 
+                    alt={storeName} 
+                    className={`${className} rounded-full object-cover border-2 border-[#e0e5ec] shadow-[2px_2px_5px_#a3b1c6,-2px_-2px_5px_#ffffff]`} 
+                    onError={(e) => {
+                        e.target.onerror = null; 
+                        e.target.src = `https://ui-avatars.com/api/?name=${storeName}&background=e0e5ec&color=3B82F6&bold=true`;
+                    }}
+                />
+             );
+        };
+
+        // --- COMPONENTS ---
+        const DateInput = ({ value, onChange, required, className, placeholder = "dd/mm/aaaa" }) => {
+            const [inputType, setInputType] = useState('text');
+            return (
+                <div className="relative w-full group">
+                    <input
+                        type={inputType}
+                        required={required}
+                        value={inputType === 'text' && value ? formatDateBR(value) : value}
+                        onChange={onChange}
+                        onFocus={(e) => {
+                            setInputType('date');
+                            if (e.target.showPicker) {
+                                try { e.target.showPicker(); } catch (err) {}
+                            }
+                        }}
+                        onBlur={() => setInputType('text')}
+                        placeholder={placeholder}
+                        className={className}
+                    />
+                    {inputType === 'text' && (
+                        <div className="absolute right-5 top-1/2 transform -translate-y-1/2 pointer-events-none text-blue-400 group-hover:text-blue-500 transition-colors">
+                            <Icons.Calendar className="w-5 h-5" />
+                        </div>
+                    )}
+                </div>
+            );
+        };
+
+        const ToastContainer = ({ toasts, removeToast }) => (
+            <div className="fixed top-4 right-4 z-[60] flex flex-col gap-3 pointer-events-none">
+                {toasts.map(toast => (
+                    <div key={toast.id} className={`pointer-events-auto flex items-center gap-3 px-5 py-4 rounded-2xl neu-panel transform transition-all duration-300 animate-in slide-in-from-right fade-in ${
+                        toast.type === 'error' ? 'text-red-500' : 
+                        toast.type === 'success' ? 'text-emerald-500' : 'text-blue-500'
+                    }`}>
+                        <div className="neu-input p-2 rounded-full">
+                            {toast.type === 'error' ? <Icons.AlertCircle className="w-5 h-5"/> : 
+                             toast.type === 'success' ? <Icons.Check className="w-5 h-5"/> : 
+                             <Icons.AlertCircle className="w-5 h-5"/>}
+                        </div>
+                        <div>
+                            <p className="font-semibold text-sm text-slate-600">{toast.message}</p>
+                        </div>
+                        <button onClick={() => removeToast(toast.id)} className="opacity-60 hover:opacity-100 ml-2 text-slate-400">
+                            <Icons.X className="w-4 h-4" />
+                        </button>
+                    </div>
+                ))}
+            </div>
+        );
+
+        const ExpenseCalendar = ({ expenses, formatCurrency, onUpdateExpense, currency, showToast }) => {
+            const [currentDate, setCurrentDate] = useState(new Date());
+            const [selectedDateStr, setSelectedDateStr] = useState(getTodayLocal());
+            
+            const [receiptModal, setReceiptModal] = useState({ open: false, ex: null });
+            const [receiptPassword, setReceiptPassword] = useState('');
+
+            const getDaysInMonth = (year, month) => new Date(year, month + 1, 0).getDate();
+            const getFirstDayOfMonth = (year, month) => new Date(year, month, 1).getDay();
+
+            const year = currentDate.getFullYear();
+            const month = currentDate.getMonth();
+
+            const daysInMonth = getDaysInMonth(year, month);
+            const firstDay = getFirstDayOfMonth(year, month);
+
+            const handlePrevMonth = () => setCurrentDate(new Date(year, month - 1, 1));
+            const handleNextMonth = () => setCurrentDate(new Date(year, month + 1, 1));
+            const handleToday = () => {
+                setCurrentDate(new Date());
+                setSelectedDateStr(getTodayLocal());
+            };
+
+            const handleDayClick = (day) => {
+                const d = String(day).padStart(2, '0');
+                const m = String(month + 1).padStart(2, '0');
+                setSelectedDateStr(`${year}-${m}-${d}`);
+            };
+
+            const initiateToggleReceipt = (ex) => {
+                setReceiptModal({ open: true, ex });
+                setReceiptPassword('');
+            };
+
+            const confirmToggleReceipt = () => {
+                if (receiptPassword === "#Banana@10") {
+                    onUpdateExpense(receiptModal.ex.id, { received: !receiptModal.ex.received });
+                    setReceiptModal({ open: false, ex: null });
+                    if(showToast) showToast(receiptModal.ex.received ? "Recebimento cancelado." : "Recebimento confirmado!", "success");
+                } else {
+                    if(showToast) showToast("Senha incorreta.", "error");
+                }
+            };
+
+            const monthNames = ["Janeiro", "Fevereiro", "Março", "Abril", "Maio", "Junho", "Julho", "Agosto", "Setembro", "Outubro", "Novembro", "Dezembro"];
+
+            const selectedExpenses = expenses.filter(e => e.date === selectedDateStr);
+
+            return (
+                <div className="space-y-8 fade-in relative">
+                    {receiptModal.open && (
+                        <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-slate-900/40 backdrop-blur-md p-4 animate-in fade-in">
+                            <div className="neu-panel w-full max-w-xs p-8 text-center">
+                                <div className="mx-auto w-16 h-16 neu-input rounded-2xl flex items-center justify-center mb-6 text-blue-500">
+                                    <Icons.Check className="w-8 h-8" />
+                                </div>
+                                <h3 className="text-xl font-black text-slate-700 mb-2">Confirmar Ação</h3>
+                                <p className="text-sm text-slate-500 mb-6">Digite a senha do administrador.</p>
+                                <input 
+                                    type="password" 
+                                    autoFocus
+                                    placeholder="Senha"
+                                    value={receiptPassword}
+                                    onChange={e => setReceiptPassword(e.target.value)}
+                                    className="neu-input w-full px-5 py-4 rounded-2xl text-center font-bold text-slate-700 mb-8" 
+                                />
+                                <div className="flex gap-4">
+                                    <button onClick={() => setReceiptModal({open:false, ex:null})} className="flex-1 py-4 neu-btn text-slate-500 font-bold rounded-2xl">Cancelar</button>
+                                    <button onClick={confirmToggleReceipt} className="flex-1 py-4 neu-btn-primary font-bold rounded-2xl">Confirmar</button>
+                                </div>
+                            </div>
+                        </div>
+                    )}
+
+                    <div className="neu-panel p-8 flex flex-col relative transition-all duration-300">
+                        <div className="flex flex-col md:flex-row justify-between items-center gap-6 mb-8">
+                            <div className="flex items-center gap-6">
+                                <h2 className="text-2xl font-extrabold text-slate-700 tracking-tight">{monthNames[month]} <span className="opacity-40 font-medium">{year}</span></h2>
+                            </div>
+
+                            <div className="flex items-center gap-4">
+                                <button onClick={handlePrevMonth} className="neu-btn p-3 rounded-xl text-slate-500 hover:text-blue-500 transition-all"><Icons.ChevronLeft className="w-5 h-5"/></button>
+                                <button onClick={handleToday} className="neu-btn px-6 py-3 text-sm font-bold text-slate-500 hover:text-blue-500 rounded-xl transition-all uppercase tracking-wider">Hoje</button>
+                                <button onClick={handleNextMonth} className="neu-btn p-3 rounded-xl text-slate-500 hover:text-blue-500 transition-all"><Icons.ChevronRight className="w-5 h-5"/></button>
+                            </div>
+                        </div>
+
+                        <div>
+                            <div className="grid grid-cols-7 mb-6">
+                                {["Dom", "Seg", "Ter", "Qua", "Qui", "Sex", "Sáb"].map(d => (
+                                    <div key={d} className="text-center text-xs font-bold text-slate-400 uppercase tracking-widest">
+                                        {d}
+                                    </div>
+                                ))}
+                            </div>
+                            
+                            <div className="grid grid-cols-7 gap-4">
+                                {Array.from({ length: firstDay }).map((_, i) => (
+                                    <div key={`empty-${i}`}></div>
+                                ))}
+
+                                {Array.from({ length: daysInMonth }).map((_, i) => {
+                                    const day = i + 1;
+                                    const dateStr = `${year}-${String(month + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+                                    const isToday = dateStr === getTodayLocal();
+                                    const isSelected = dateStr === selectedDateStr;
+                                    
+                                    const dayExpenses = expenses.filter(e => e.date === dateStr);
+                                    const hasPending = dayExpenses.some(e => !e.received);
+                                    const allReceived = dayExpenses.length > 0 && dayExpenses.every(e => e.received);
+
+                                    return (
+                                        <div 
+                                            key={day} 
+                                            onClick={() => handleDayClick(day)}
+                                            className={`
+                                            h-24 md:h-28 p-3 flex flex-col relative transition-all duration-300 rounded-2xl cursor-pointer
+                                            ${isSelected ? 'neu-active' : 'neu-btn hover:-translate-y-1'}
+                                        `}>
+                                            <div className="flex justify-between items-start">
+                                                <span className={`
+                                                    w-8 h-8 flex items-center justify-center rounded-xl text-sm font-bold transition-all
+                                                    ${isSelected || isToday ? 'text-blue-500' : 'text-slate-500'}
+                                                `}>
+                                                    {day}
+                                                </span>
+                                            </div>
+
+                                            <div className="mt-auto flex flex-wrap gap-1.5 p-1">
+                                                {hasPending && <div className="w-2.5 h-2.5 rounded-full bg-orange-400 shadow-sm" title="Recebimentos Pendentes"></div>}
+                                                {allReceived && <div className="w-2.5 h-2.5 rounded-full bg-emerald-500 shadow-sm" title="Tudo Recebido"></div>}
+                                            </div>
+                                        </div>
+                                    );
+                                })}
+                            </div>
+                        </div>
+                    </div>
+
+                    <div className="neu-panel p-8">
+                        <h3 className="text-xl font-bold text-slate-700 mb-6 flex items-center gap-3">
+                            <div className="p-2 neu-input rounded-lg text-blue-500"><Icons.Calendar className="w-5 h-5"/></div>
+                            Lançamentos do dia {formatDateBR(selectedDateStr)}
+                        </h3>
+                        
+                        {selectedExpenses.length === 0 ? (
+                            <p className="text-slate-400 font-medium text-center py-6">Nenhum lançamento nesta data.</p>
+                        ) : (
+                            <div className="space-y-4">
+                                {selectedExpenses.map(ex => (
+                                    <div key={ex.id} className="neu-input p-5 rounded-2xl flex flex-col md:flex-row justify-between items-center gap-4">
+                                        <div className="flex-1">
+                                            <div className="flex items-center gap-3 mb-2">
+                                                <span className="text-xs font-bold text-slate-400 uppercase tracking-widest flex items-center gap-2">
+                                                    {getStoreLogo(ex.store, "w-5 h-5")} {ex.store}
+                                                </span>
+                                                <span className="text-[10px] bg-slate-200 text-slate-500 px-2 py-0.5 rounded-md font-bold">{ex.category}</span>
+                                            </div>
+                                            <p className="font-black text-slate-700 text-xl">{currency} {formatCurrency(ex.amount)}</p>
+                                            {ex.notes && <p className="text-sm text-slate-500 mt-1 italic">{ex.notes}</p>}
+                                        </div>
+                                        
+                                        <button 
+                                            onClick={() => initiateToggleReceipt(ex)}
+                                            className={`px-6 py-4 rounded-xl font-bold flex items-center gap-2 transition-all ${
+                                                ex.received 
+                                                    ? 'neu-active text-emerald-500' 
+                                                    : 'neu-btn text-orange-500 hover:text-orange-600'
+                                            }`}
+                                        >
+                                            {ex.received ? <Icons.Check className="w-5 h-5" /> : <Icons.AlertCircle className="w-5 h-5" />}
+                                            {ex.received ? 'Recebido' : 'Confirmar Recebimento'}
+                                        </button>
+                                    </div>
+                                ))}
+                            </div>
+                        )}
+                    </div>
+                </div>
+            );
+        };
+
+        const AnalyticsDashboard = ({ expenses, currency, formatCurrency }) => {
+            const [viewMode, setViewMode] = useState('month');
+            const [currentDate, setCurrentDate] = useState(new Date());
+
+            const handlePrev = () => {
+                const newDate = new Date(currentDate);
+                if (viewMode === 'month') newDate.setMonth(newDate.getMonth() - 1);
+                else newDate.setFullYear(newDate.getFullYear() - 1);
+                setCurrentDate(newDate);
+            };
+
+            const handleNext = () => {
+                const newDate = new Date(currentDate);
+                if (viewMode === 'month') newDate.setMonth(newDate.getMonth() + 1);
+                else newDate.setFullYear(newDate.getFullYear() + 1);
+                setCurrentDate(newDate);
+            };
+
+            const getLabel = () => {
+                if (viewMode === 'month') {
+                    const monthName = currentDate.toLocaleDateString('pt-BR', { month: 'long' });
+                    return `${monthName.charAt(0).toUpperCase() + monthName.slice(1)} ${currentDate.getFullYear()}`;
+                }
+                return `Ano de ${currentDate.getFullYear()}`;
+            };
+
+            const filteredData = useMemo(() => {
+                const targetYear = currentDate.getFullYear();
+                const targetMonth = currentDate.getMonth();
+
+                return expenses.filter(ex => {
+                    const [y, m] = ex.date.split('-').map(Number);
+                    if (viewMode === 'year') return y === targetYear;
+                    return y === targetYear && (m - 1) === targetMonth;
+                });
+            }, [expenses, currentDate, viewMode]);
+
+            const monthlyData = useMemo(() => {
+                if (viewMode !== 'year') return [];
+                const months = Array(12).fill(0);
+                filteredData.forEach(ex => {
+                    const monthIndex = parseInt(ex.date.split('-')[1]) - 1;
+                    months[monthIndex] += ex.amount;
+                });
+                return months;
+            }, [filteredData, viewMode]);
+
+            const total = filteredData.reduce((acc, curr) => acc + curr.amount, 0);
+            
+            const expensesByStore = filteredData.reduce((acc, curr) => {
+                acc[curr.store] = (acc[curr.store] || 0) + curr.amount;
+                return acc;
+            }, {});
+            
+            const sortedStores = Object.entries(expensesByStore)
+                .sort((a, b) => b[1] - a[1]); 
+
+            const expensesByCategory = filteredData.reduce((acc, curr) => {
+                acc[curr.category] = (acc[curr.category] || 0) + curr.amount;
+                return acc;
+            }, {});
+
+            const sortedCategories = Object.entries(expensesByCategory)
+                .sort((a, b) => b[1] - a[1]);
+
+            const topExpenses = [...filteredData]
+                .sort((a, b) => b.amount - a.amount)
+                .slice(0, 5);
+
+            const getBarWidth = (value, max) => max > 0 ? `${(value / max) * 100}%` : '0%';
+            const getBarHeight = (value, max) => max > 0 ? `${(value / max) * 100}%` : '0%';
+
+            return (
+                <div className="space-y-8 fade-in">
+                    
+                    <div className="neu-panel p-4 flex flex-col md:flex-row justify-between items-center gap-6">
+                        <div className="flex gap-4">
+                            <button 
+                                onClick={() => setViewMode('month')}
+                                className={`px-6 py-3 rounded-xl text-sm font-bold transition-all ${viewMode === 'month' ? 'neu-active' : 'neu-btn text-slate-500'}`}
+                            >
+                                Mensal
+                            </button>
+                            <button 
+                                onClick={() => setViewMode('year')}
+                                className={`px-6 py-3 rounded-xl text-sm font-bold transition-all ${viewMode === 'year' ? 'neu-active' : 'neu-btn text-slate-500'}`}
+                            >
+                                Anual
+                            </button>
+                        </div>
+
+                        <div className="flex items-center gap-6">
+                            <button onClick={handlePrev} className="neu-btn p-3 rounded-xl text-slate-500 transition-colors"><Icons.ChevronLeft className="w-5 h-5"/></button>
+                            <h3 className="text-lg font-black text-slate-700 min-w-[160px] text-center capitalize">{getLabel()}</h3>
+                            <button onClick={handleNext} className="neu-btn p-3 rounded-xl text-slate-500 transition-colors"><Icons.ChevronRight className="w-5 h-5"/></button>
+                        </div>
+                    </div>
+
+                    {filteredData.length === 0 ? (
+                        <div className="neu-panel p-16 text-center text-slate-400">
+                            <div className="flex justify-center mb-6 opacity-50"><Icons.Chart className="w-16 h-16"/></div>
+                            <h3 className="text-xl font-bold text-slate-600">Sem dados neste período</h3>
+                        </div>
+                    ) : (
+                        <>
+                            <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+                                <div className="neu-panel p-8 relative overflow-hidden">
+                                    <div className="absolute top-0 right-0 p-6 opacity-5 text-blue-500 transform translate-x-2 -translate-y-2">
+                                        <Icons.DollarSign className="w-24 h-24" />
+                                    </div>
+                                    <p className="text-sm text-slate-400 font-bold uppercase tracking-wider mb-2">Total {viewMode === 'year' ? 'Anual' : 'Mensal'}</p>
+                                    <h3 className="text-3xl font-black text-slate-700">{currency} {formatCurrency(total)}</h3>
+                                    {viewMode === 'year' && (
+                                        <p className="text-xs text-blue-500 font-bold mt-4">
+                                            Média: {currency} {formatCurrency(total / 12)} / mês
+                                        </p>
+                                    )}
+                                </div>
+
+                                <div className="neu-panel p-8 relative overflow-hidden">
+                                    <div className="absolute top-0 right-0 p-6 opacity-5 text-slate-500 transform translate-x-2 -translate-y-2">
+                                        <Icons.Store className="w-24 h-24" />
+                                    </div>
+                                    <p className="text-sm text-slate-400 font-bold uppercase tracking-wider mb-2">Loja Top 1</p>
+                                    <h3 className="text-2xl font-black text-slate-700 truncate" title={sortedStores[0]?.[0]}>{sortedStores[0]?.[0] || '-'}</h3>
+                                    <p className="text-sm font-bold text-slate-500 mt-2">{currency} {formatCurrency(sortedStores[0]?.[1] || 0)}</p>
+                                </div>
+
+                                <div className="neu-panel p-8 relative overflow-hidden">
+                                    <div className="absolute top-0 right-0 p-6 opacity-5 text-slate-500 transform translate-x-2 -translate-y-2">
+                                        <Icons.Tag className="w-24 h-24" />
+                                    </div>
+                                    <p className="text-sm text-slate-400 font-bold uppercase tracking-wider mb-2">Categoria Top 1</p>
+                                    <h3 className="text-2xl font-black text-slate-700 truncate" title={sortedCategories[0]?.[0]}>{sortedCategories[0]?.[0] || '-'}</h3>
+                                    <p className="text-sm font-bold text-slate-500 mt-2">{currency} {formatCurrency(sortedCategories[0]?.[1] || 0)}</p>
+                                </div>
+                            </div>
+
+                            {viewMode === 'year' && (
+                                <div className="neu-panel p-8">
+                                    <h3 className="font-bold text-slate-600 mb-8 flex items-center gap-3">
+                                        <div className="p-2 neu-input rounded-lg text-blue-500"><Icons.FileSpreadsheet className="w-5 h-5"/></div>
+                                        Evolução Mensal ({currentDate.getFullYear()})
+                                    </h3>
+                                    <div className="h-56 flex items-end justify-between gap-4">
+                                        {monthlyData.map((val, idx) => {
+                                            const maxVal = Math.max(...monthlyData);
+                                            const monthName = new Date(2024, idx, 1).toLocaleDateString('pt-BR', { month: 'short' }).replace('.', '');
+                                            return (
+                                                <div key={idx} className="flex-1 flex flex-col items-center gap-3 group h-full justify-end">
+                                                    {val > 0 && (
+                                                        <span className="text-[10px] font-bold text-slate-500 opacity-0 group-hover:opacity-100 transition-opacity neu-panel px-2 py-1 rounded shadow-sm z-10 whitespace-nowrap">
+                                                            {formatCurrency(val)}
+                                                        </span>
+                                                    )}
+                                                    <div className="w-full max-w-[40px] neu-progress-track rounded-full transition-all duration-700 h-full flex flex-col justify-end p-1">
+                                                        <div 
+                                                            className={`w-full rounded-full transition-all duration-700 ${val > 0 ? 'bg-blue-500' : 'bg-transparent h-0'}`}
+                                                            style={{ height: val > 0 ? getBarHeight(val, maxVal) : '0%' }}
+                                                        ></div>
+                                                    </div>
+                                                    <span className="text-[11px] font-bold text-slate-400 uppercase mt-2">{monthName}</span>
+                                                </div>
+                                            )
+                                        })}
+                                    </div>
+                                </div>
+                            )}
+
+                            <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                                <div className="neu-panel p-8">
+                                    <h3 className="font-bold text-slate-600 mb-8 flex items-center gap-3">
+                                        <div className="p-2 neu-input rounded-lg text-blue-500"><Icons.Store className="w-5 h-5"/></div>
+                                        Ranking de Lojas ({viewMode === 'month' ? 'Mês' : 'Ano'})
+                                    </h3>
+                                    <div className="space-y-6">
+                                        {sortedStores.map(([store, value], idx) => (
+                                            <div key={store} className="relative">
+                                                <div className="flex justify-between text-sm font-bold text-slate-600 mb-3 items-center">
+                                                    <span className="flex items-center gap-2">
+                                                        {getStoreLogo(store, "w-5 h-5")} {store}
+                                                    </span>
+                                                    <span>{currency} {formatCurrency(value)}</span>
+                                                </div>
+                                                <div className="w-full neu-progress-track h-4">
+                                                    <div 
+                                                        className="neu-progress-fill transition-all duration-1000 ease-out"
+                                                        style={{ width: getBarWidth(value, sortedStores[0][1]) }}
+                                                    >
+                                                        <div className="neu-progress-knob"></div>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        ))}
+                                    </div>
+                                </div>
+
+                                <div className="neu-panel p-8">
+                                    <h3 className="font-bold text-slate-600 mb-8 flex items-center gap-3">
+                                        <div className="p-2 neu-input rounded-lg text-blue-500"><Icons.AlertTriangle className="w-5 h-5"/></div>
+                                        Maiores Lançamentos ({viewMode === 'month' ? 'Mês' : 'Ano'})
+                                    </h3>
+                                    <div className="overflow-hidden neu-input rounded-2xl p-2">
+                                        <table className="w-full text-left text-sm">
+                                            <thead className="text-slate-400 font-bold uppercase text-[10px] tracking-wider">
+                                                <tr>
+                                                    <th className="p-4 border-b border-white/20">Categoria</th>
+                                                    <th className="p-4 border-b border-white/20">Loja</th>
+                                                    <th className="p-4 border-b border-white/20 text-right">Valor</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody>
+                                                {topExpenses.map((ex, idx) => (
+                                                    <tr key={ex.id || idx} className="hover:bg-slate-200/50 transition-colors">
+                                                        <td className="p-4 font-semibold text-slate-600 truncate max-w-[120px]">{ex.category || ex.description}</td>
+                                                        <td className="p-4 text-slate-500 truncate max-w-[120px] flex items-center gap-2">
+                                                            {getStoreLogo(ex.store, "w-4 h-4")} {ex.store}
+                                                        </td>
+                                                        <td className="p-4 text-right font-bold text-slate-700">{formatCurrency(ex.amount)}</td>
+                                                    </tr>
+                                                ))}
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                </div>
+                            </div>
+                        </>
+                    )}
+                </div>
+            );
+        };
+
+        const App = () => {
+            const [expenses, setExpenses] = useState([]);
+            const [settings, setSettings] = useState(DEFAULT_SETTINGS);
+            const [isSettingsOpen, setIsSettingsOpen] = useState(false);
+            const [toasts, setToasts] = useState([]);
+            const [searchTerm, setSearchTerm] = useState('');
+            const [groupBy, setGroupBy] = useState('date');
+            
+            const [filterMode, setFilterMode] = useState('day');
+            const [selectedDate, setSelectedDate] = useState('');
+            const [selectedMonth, setSelectedMonth] = useState('');
+
+            const [currentView, setCurrentView] = useState('dashboard');
+            const [syncStatus, setSyncStatus] = useState('offline');
+            const [user, setUser] = useState(null);
+            
+            const fileInputRef = useRef(null);
+            
+            const [editingId, setEditingId] = useState(null);
+            const [date, setDate] = useState(getTodayLocal());
+            const [store, setStore] = useState('');
+            const [category, setCategory] = useState('');
+            const [amount, setAmount] = useState('');
+            const [notes, setNotes] = useState('');
+
+            const [showBackupOptions, setShowBackupOptions] = useState(false);
+            
+            useEffect(() => {
+                const initAuth = async () => {
+                    try {
+                        if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token) {
+                            await auth.signInWithCustomToken(__initial_auth_token);
+                        } else {
+                            await auth.signInAnonymously();
+                        }
+                    } catch (error) {
+                        console.error("Erro auth:", error);
+                        setSyncStatus('error');
+                        showToast("Erro ao conectar.", "error");
+                    }
+                };
+                
+                auth.onAuthStateChanged(u => {
+                    if(u) setUser(u);
+                });
+
+                initAuth();
+
+                const savedSet = localStorage.getItem('odoo_fast_settings');
+                if (savedSet) {
+                    const parsed = JSON.parse(savedSet);
+                    parsed.categories = CATEGORIES_LIST.map(cat => ({ label: cat, odooRef: cat }));
+                    setSettings(parsed);
+                }
+            }, []);
+
+            const getRefs = () => {
+                let expensesRef;
+                
+                if (typeof __app_id !== 'undefined') {
+                    const base = db.collection('artifacts').doc(envAppId).collection('public').doc('data');
+                    expensesRef = base.collection('expenses'); 
+                } else {
+                    expensesRef = db.collection('recebimentos-payjoy-crefaz').doc('data').collection('team_expenses_v2'); 
+                }
+                return { expensesRef };
+            };
+
+            useEffect(() => {
+                if (!user) return;
+
+                setSyncStatus('syncing');
+                const { expensesRef } = getRefs();
+
+                const unsubscribe = expensesRef.orderBy('date', 'desc').onSnapshot(snapshot => {
+                    const loadedExpenses = snapshot.docs.map(doc => ({
+                        id: doc.id,
+                        ...doc.data()
+                    }));
+                    
+                    setExpenses(loadedExpenses);
+                    setSyncStatus('synced');
+                }, err => {
+                    console.error("Erro leitura despesas:", err);
+                    setSyncStatus('error');
+                });
+
+                return () => unsubscribe();
+            }, [user]);
+
+            const handleDBAdd = async (newExpense) => {
+                try {
+                    const { expensesRef } = getRefs();
+                    await expensesRef.add(newExpense); 
+                    setSyncStatus('synced');
+                } catch (e) {
+                    console.error("Erro ao adicionar:", e);
+                    showToast("Erro ao salvar online", "error");
+                }
+            };
+
+            const handleDBUpdate = async (id, updatedData) => {
+                try {
+                    const { expensesRef } = getRefs();
+                    await expensesRef.doc(id).update(updatedData);
+                    setSyncStatus('synced');
+                } catch (e) { console.error("Erro update:", e); }
+            };
+
+            const handleEmptyStateRestore = () => {
+                if(fileInputRef.current) {
+                    fileInputRef.current.click();
+                }
+            };
+
+            useEffect(() => { localStorage.setItem('odoo_fast_settings', JSON.stringify(settings)); }, [settings]);
+
+            useEffect(() => {
+                const handleBeforeUnload = (e) => {
+                    const message = "Atenção: Você efetuou todos os lançamentos do dia e enviou o relatório?";
+                    e.preventDefault();
+                    e.returnValue = message;
+                    return message;
+                };
+                window.addEventListener('beforeunload', handleBeforeUnload);
+                return () => {
+                    window.removeEventListener('beforeunload', handleBeforeUnload);
+                };
+            }, []);
+
+            const showToast = (message, type = 'success') => {
+                const id = Date.now();
+                setToasts(prev => [...prev, { id, message, type }]);
+                setTimeout(() => setToasts(prev => prev.filter(t => t.id !== id)), 4000);
+            };
+
+            const saveToComputer = async () => {
+                const backupData = {
+                    data: expenses,
+                    version: 3
+                };
+
+                const dataStr = JSON.stringify(backupData, null, 2);
+                const fileName = `backup_completo_${formatDateBR(getTodayLocal()).replace(/\//g, '-')}.json`;
+
+                if (window.showSaveFilePicker) {
+                    try {
+                        const handle = await window.showSaveFilePicker({
+                            suggestedName: fileName,
+                            types: [{ description: 'Arquivo de Backup JSON', accept: { 'application/json': ['.json'] }, }],
+                        });
+                        const writable = await handle.createWritable();
+                        await writable.write(dataStr);
+                        await writable.close();
+                        showToast("Backup salvo no computador!", "success");
+                        setShowBackupOptions(false);
+                        return;
+                    } catch (err) { if (err.name === 'AbortError') return; }
+                }
+
+                const blob = new Blob([dataStr], { type: "application/json" });
+                const url = URL.createObjectURL(blob);
+                const link = document.createElement('a');
+                link.href = url;
+                link.download = fileName;
+                document.body.appendChild(link);
+                link.click();
+                document.body.removeChild(link);
+                showToast("Backup baixado para Downloads!", "success");
+                setShowBackupOptions(false);
+            };
+
+            const handleBackupClick = () => {
+                setShowBackupOptions(true);
+            };
+
+            const triggerRestore = () => { fileInputRef.current.click(); };
+
+            const handleRestoreFile = (e) => {
+                const file = e.target.files[0];
+                if (!file) return;
+                const reader = new FileReader();
+                reader.onload = async (event) => {
+                    try {
+                        const importedData = JSON.parse(event.target.result);
+                        if (confirm("ATENÇÃO: Deseja enviar estes dados para a nuvem para que TODOS tenham acesso?")) {
+                            
+                            const { expensesRef } = getRefs();
+                            let batch = db.batch();
+                            let count = 0;
+                            
+                            if (importedData.data && Array.isArray(importedData.data)) {
+                                for(const item of importedData.data) {
+                                    const ref = expensesRef.doc();
+                                    batch.set(ref, {
+                                        ...item,
+                                        createdAt: firebase.firestore.FieldValue.serverTimestamp()
+                                    });
+                                    count++;
+                                    if(count % 400 === 0) { await batch.commit(); batch = db.batch(); }
+                                }
+                            }
+                            await batch.commit();
+                            showToast(`${count} registros enviados!`, "success");
+                        }
+                    } catch (err) { showToast("Erro ao ler arquivo", "error"); }
+                };
+                reader.readAsText(file);
+                e.target.value = '';
+            };
+
+            const handleAmountChange = (e) => {
+                let val = e.target.value.replace(/\D/g, '');
+                if (!val) { setAmount(''); return; }
+                setAmount(new Intl.NumberFormat('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(parseFloat(val) / 100));
+            };
+
+            const resetForm = () => {
+                setAmount('');
+                setNotes('');
+                setEditingId(null);
+            };
+
+            const startEdit = (ex) => {
+                setEditingId(ex.id);
+                setDate(ex.date);
+                setStore(ex.store);
+                setCategory(ex.category);
+                setAmount(formatCurrency(ex.amount));
+                setNotes(ex.notes || '');
+                window.scrollTo({ top: 0, behavior: 'smooth' });
+                showToast("Editando...", "info");
+                if (currentView === 'calendar') setCurrentView('dashboard');
+            };
+
+            const duplicateExpense = (ex) => {
+                setDate(ex.date);
+                setStore(ex.store);
+                setCategory(ex.category);
+                setAmount(formatCurrency(ex.amount));
+                setNotes(ex.notes || '');
+                window.scrollTo({ top: 0, behavior: 'smooth' });
+                showToast("Copiado!", "info");
+                if (currentView === 'calendar') setCurrentView('dashboard');
+            };
+
+            const cancelEdit = () => { resetForm(); showToast("Cancelado", "info"); };
+
+            const handleSubmit = async (e) => {
+                e.preventDefault();
+                if (settings.employeeName === "Seu Nome" || !settings.employeeName.trim()) {
+                    showToast("Configure seu nome antes de lançar.", "error");
+                    setIsSettingsOpen(true);
+                    return;
+                }
+                const totalVal = parseFloat(amount.replace(/\./g, '').replace(',', '.'));
+                if (isNaN(totalVal) || totalVal <= 0) return showToast("Valor inválido", "error");
+
+                if (editingId) {
+                    const updatedData = {
+                        date, description: category, store, category, amount: totalVal, notes,
+                        employeeName: settings.employeeName,
+                        updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+                    };
+                    await handleDBUpdate(editingId, updatedData);
+                    showToast("Lançamento atualizado!");
+                    resetForm();
+                } else {
+                    let entries = [];
+                    if (store === "Piracicaba (DP - Realme - XV)") {
+                        ["Dom Pedro II", "Realme", "Xv de Novembro"].forEach(s => entries.push({ s, v: totalVal / 3 }));
+                    } else if (store === "Amparo (Premium - Kassouf)") {
+                        ["Premium", "Kassouf"].forEach(s => entries.push({ s, v: totalVal / 2 }));
+                    } else if (store === "Todas") {
+                        ["Dom Pedro II", "Realme", "Xv de Novembro", "Premium", "Kassouf"].forEach(s => entries.push({ s, v: totalVal / 5 }));
+                    } else {
+                        entries.push({ s: store, v: totalVal });
+                    }
+
+                    for (let ent of entries) {
+                        const newDoc = {
+                            date, description: category, category, notes,
+                            store: ent.s,
+                            amount: ent.v,
+                            quantity: 1.0,
+                            employeeName: settings.employeeName,
+                            originalTotal: entries.length > 1 ? totalVal : null,
+                            createdAt: firebase.firestore.FieldValue.serverTimestamp()
+                        };
+                        await handleDBAdd(newDoc);
+                    }
+                    showToast(entries.length > 1 ? `${entries.length} despesas geradas!` : "Despesa salva!");
+                    resetForm();
+                }
+            };
+
+            const exportToCSV = () => {
+                if (expenses.length === 0) return showToast("Nada para exportar", "error");
+                const headers = ["date", "name", "store_name", "product_id", "unit_amount", "quantity", "description", "employee_id"];
+                const rows = expenses.map(ex => [
+                    formatDateBR(ex.date), ex.category || ex.description, ex.store, ex.category,
+                    formatCurrency(ex.amount), ex.quantity, ex.notes, 
+                    ex.employeeName || settings.employeeName
+                ]);
+                const csvContent = "\uFEFF" + [headers.join(';'), ...rows.map(r => r.map(f => `"${String(f).replace(/"/g, '""')}"`).join(';'))].join('\n');
+                const url = URL.createObjectURL(new Blob([csvContent], { type: 'text/csv;charset=utf-8;' }));
+                const link = document.createElement('a');
+                link.href = url;
+                link.download = `lancamentos_odoo_${formatDateBR(getTodayLocal()).replace(/\//g, '-')}.csv`;
+                document.body.appendChild(link);
+                link.click();
+                document.body.removeChild(link);
+                showToast("Arquivo CSV gerado!");
+            };
+
+            const availableDates = useMemo(() => {
+                const dates = [...new Set(expenses.map(e => e.date))];
+                return dates.sort((a, b) => a.localeCompare(b)); 
+            }, [expenses]);
+
+             const availableMonths = useMemo(() => {
+                const months = [...new Set(expenses.map(e => e.date.substring(0, 7)))]; 
+                return months.sort((a, b) => a.localeCompare(b));
+            }, [expenses]);
+
+            useEffect(() => {
+                if (availableDates.length > 0) {
+                    if (!selectedDate || !availableDates.includes(selectedDate)) {
+                        setSelectedDate(availableDates[availableDates.length - 1]);
+                    }
+                }
+            }, [availableDates, selectedDate]);
+
+            useEffect(() => {
+                if (availableMonths.length > 0) {
+                    if (!selectedMonth || !availableMonths.includes(selectedMonth)) {
+                        setSelectedMonth(availableMonths[availableMonths.length - 1]);
+                    }
+                }
+            }, [availableMonths, selectedMonth]);
+
+            const handlePrevDate = () => {
+                const idx = availableDates.indexOf(selectedDate);
+                if (idx > 0) setSelectedDate(availableDates[idx - 1]);
+            };
+
+            const handleNextDate = () => {
+                const idx = availableDates.indexOf(selectedDate);
+                if (idx < availableDates.length - 1) setSelectedDate(availableDates[idx + 1]);
+            };
+
+            const handlePrevMonthFilter = () => {
+                const idx = availableMonths.indexOf(selectedMonth);
+                if (idx > 0) setSelectedMonth(availableMonths[idx - 1]);
+            };
+
+            const handleNextMonthFilter = () => {
+                const idx = availableMonths.indexOf(selectedMonth);
+                if (idx < availableMonths.length - 1) setSelectedMonth(availableMonths[idx + 1]);
+            };
+
+            const filteredExpenses = useMemo(() => {
+                let filtered = expenses;
+                
+                if (searchTerm) {
+                    const lowerSearch = searchTerm.toLowerCase();
+                    return filtered.filter(ex => 
+                        (ex.description && ex.description.toLowerCase().includes(lowerSearch)) ||
+                        ex.category.toLowerCase().includes(lowerSearch) ||
+                        ex.store.toLowerCase().includes(lowerSearch) ||
+                        (ex.notes && ex.notes.toLowerCase().includes(lowerSearch))
+                    );
+                }
+
+                if (filterMode === 'month' && selectedMonth) {
+                    filtered = filtered.filter(ex => ex.date.startsWith(selectedMonth));
+                }
+                
+                else if (filterMode === 'day' && selectedDate) {
+                    filtered = filtered.filter(ex => ex.date === selectedDate);
+                }
+                
+                return filtered;
+            }, [expenses, searchTerm, selectedDate, selectedMonth, filterMode]);
+
+            const groupedExpenses = useMemo(() => {
+                const groups = {};
+                filteredExpenses.forEach(ex => {
+                    const key = groupBy === 'date' ? ex.date : ex.store;
+                    if (!groups[key]) groups[key] = [];
+                    groups[key].push(ex);
+                });
+                const sortedKeys = Object.keys(groups).sort((a, b) => {
+                    if (groupBy === 'date') return b.localeCompare(a); 
+                    return a.localeCompare(b); 
+                });
+                return sortedKeys.map(key => ({
+                    key, items: groups[key], total: groups[key].reduce((sum, item) => sum + item.amount, 0)
+                }));
+            }, [filteredExpenses, groupBy]);
+
+            const totalsByStore = useMemo(() => {
+                const acc = {};
+                filteredExpenses.forEach(ex => { acc[ex.store] = (acc[ex.store] || 0) + ex.amount; });
+                return acc;
+            }, [filteredExpenses]);
+            
+            const totalGeneral = filteredExpenses.reduce((sum, ex) => sum + ex.amount, 0);
+
+            const getTotalTitle = () => {
+                if (searchTerm) return "(Busca)";
+                if (filterMode === 'month') return `(Mês: ${formatMonthBR(selectedMonth)})`;
+                return "(Do Dia)";
+            }
+
+            return (
+                <div className="pb-20 print:pb-0 min-h-screen">
+                    <ToastContainer toasts={toasts} removeToast={id => setToasts(p => p.filter(t => t.id !== id))} />
+
+                    <div className="sticky top-0 z-50 no-print px-4 py-6">
+                        <div className="max-w-5xl mx-auto">
+                            <div className="neu-panel p-4 px-6 flex justify-between items-center rounded-[2rem]">
+                                <div className="flex items-center gap-6">
+                                    <div className="neu-btn p-4 rounded-2xl text-blue-500">
+                                        <Icons.Wallet className="w-8 h-8" />
+                                    </div>
+                                    <div className="flex flex-col justify-center">
+                                        <div className="flex items-center gap-4">
+                                            <h1 className="font-bold text-slate-700 text-xl tracking-wide">
+                                                Recebimentos Payjoy/Crefaz
+                                            </h1>
+                                            <div className="flex items-center gap-3 ml-4 border-l border-slate-300 pl-6">
+                                                <button 
+                                                    onClick={() => setCurrentView('dashboard')} 
+                                                    className={`p-3 rounded-xl transition-all flex items-center gap-2 font-bold text-sm ${currentView === 'dashboard' ? 'neu-active text-blue-500' : 'neu-btn text-slate-500'}`}
+                                                >
+                                                    <Icons.Home className="w-5 h-5" /> Home
+                                                </button>
+                                                <button 
+                                                    onClick={() => setCurrentView('calendar')} 
+                                                    className={`p-3 rounded-xl transition-all flex items-center gap-2 font-bold text-sm ${currentView === 'calendar' ? 'neu-active text-blue-500' : 'neu-btn text-slate-500'}`}
+                                                >
+                                                    <Icons.Calendar className="w-5 h-5" /> Calendário
+                                                </button>
+                                                <button 
+                                                    onClick={() => setCurrentView('analytics')} 
+                                                    className={`p-3 rounded-xl transition-all flex items-center gap-2 font-bold text-sm ${currentView === 'analytics' ? 'neu-active text-blue-500' : 'neu-btn text-slate-500'}`}
+                                                >
+                                                    <Icons.Chart className="w-5 h-5" /> Análise
+                                                </button>
+                                            </div>
+                                        </div>
+                                        <div className="flex items-center gap-3 mt-1">
+                                            {settings.employeeName !== "Seu Nome" ? (
+                                                <div className="flex items-center gap-2">
+                                                    <span className="text-[11px] neu-input px-3 py-1 rounded-full font-bold text-slate-500 flex items-center gap-2">
+                                                        <Icons.User className="w-3 h-3"/> {settings.employeeName}
+                                                    </span>
+                                                    {syncStatus === 'synced' && <div className="w-2 h-2 rounded-full bg-blue-500 shadow-[0_0_8px_rgba(59,130,246,0.8)]" title="Online"></div>}
+                                                    {syncStatus === 'syncing' && <div className="w-2 h-2 rounded-full bg-yellow-400 animate-pulse" title="Sincronizando..."></div>}
+                                                    {syncStatus === 'error' && <Icons.WifiOff className="w-3 h-3 text-red-500" title="Erro de Conexão" />}
+                                                </div>
+                                            ) : (
+                                                <span className="text-[11px] neu-input text-red-500 px-3 py-1 rounded-full font-bold animate-pulse">
+                                                    Offline (Configure seu Nome)
+                                                </span>
+                                            )}
+                                        </div>
+                                    </div>
+                                </div>
+                                <div className="flex items-center gap-4">
+                                    <button onClick={handleBackupClick} className="neu-btn p-4 rounded-2xl text-slate-500 hover:text-blue-500" title="Salvar Backup">
+                                        <Icons.HardDrive className="w-6 h-6" />
+                                    </button>
+                                    <button onClick={() => setIsSettingsOpen(true)} className="neu-btn p-4 rounded-2xl text-slate-500 hover:text-blue-500" title="Configurações">
+                                        <Icons.Settings className="w-6 h-6" />
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div className="max-w-5xl mx-auto px-6 space-y-10 mt-6">
+                        
+                        {currentView === 'calendar' ? (
+                            <ExpenseCalendar 
+                                expenses={expenses} 
+                                formatCurrency={formatCurrency} 
+                                onUpdateExpense={handleDBUpdate}
+                                currency={settings.currency}
+                                showToast={showToast}
+                            />
+                        ) : currentView === 'analytics' ? (
+                            <AnalyticsDashboard 
+                                expenses={expenses} 
+                                currency={settings.currency} 
+                                formatCurrency={formatCurrency}
+                            />
+                        ) : (
+                            <>
+                                {expenses.length > 0 && (
+                                    <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 gap-6 no-print fade-in">
+                                            {Object.entries(totalsByStore)
+                                                .sort((a, b) => b[1] - a[1]) 
+                                                .map(([storeName, val]) => (
+                                                <div key={storeName} className="neu-panel p-6 flex flex-col justify-between">
+                                                    <div className="flex items-center gap-3 mb-4">
+                                                        {getStoreLogo(storeName, "w-8 h-8")}
+                                                        <span className="text-[10px] uppercase font-bold text-slate-400 truncate block tracking-widest">{storeName}</span>
+                                                    </div>
+                                                    <div>
+                                                        <span className="text-xl font-black text-slate-700 block mb-4">{settings.currency} {formatCurrency(val)}</span>
+                                                        <div className="w-full neu-progress-track h-2">
+                                                            <div className={`h-full rounded-full bg-blue-500`} style={{width: '70%'}}></div>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            ))}
+                                    </div>
+                                )}
+
+                                <div className="neu-panel p-10 no-print">
+                                    <div className="flex justify-between items-center mb-10">
+                                        <h2 className="text-2xl font-bold text-slate-700 flex items-center gap-4">
+                                            <div className="p-3 neu-input rounded-2xl text-blue-500">
+                                                {editingId ? <Icons.Edit className="w-6 h-6"/> : <Icons.Plus className="w-6 h-6" />}
+                                            </div>
+                                            {editingId ? "Editar Lançamento" : "Novo Lançamento"}
+                                        </h2>
+                                        {editingId && (
+                                            <button onClick={cancelEdit} className="neu-btn px-6 py-3 rounded-xl text-sm font-bold text-slate-500 hover:text-red-500">
+                                                Cancelar Edição
+                                            </button>
+                                        )}
+                                    </div>
+
+                                    <form onSubmit={handleSubmit} className="space-y-8">
+                                        <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                                            <div className="space-y-3">
+                                                <label className="text-xs font-bold text-slate-400 uppercase tracking-widest ml-2">Data</label>
+                                                <DateInput 
+                                                    required 
+                                                    value={date} 
+                                                    onChange={e => setDate(e.target.value)}
+                                                    className="neu-input w-full px-6 py-4 rounded-2xl text-slate-700 font-semibold" 
+                                                />
+                                            </div>
+
+                                            <div className="space-y-3">
+                                                <label className="text-xs font-bold text-slate-400 uppercase tracking-widest ml-2">Categoria</label>
+                                                <div className="relative group">
+                                                    <select required value={category} onChange={e => setCategory(e.target.value)}
+                                                        className="neu-input w-full px-6 py-4 rounded-2xl appearance-none text-slate-700 font-semibold cursor-pointer">
+                                                        <option value="" disabled>Selecione...</option>
+                                                        {settings.categories.map((c, i) => <option key={i} value={c.label}>{c.label}</option>)}
+                                                    </select>
+                                                    <div className="absolute right-6 top-1/2 -translate-y-1/2 pointer-events-none text-slate-400 group-hover:text-blue-500">
+                                                        <Icons.Tag className="w-5 h-5" />
+                                                    </div>
+                                                </div>
+                                            </div>
+
+                                            <div className="space-y-3">
+                                                <label className="text-xs font-bold text-slate-400 uppercase tracking-widest ml-2">Loja / Grupo</label>
+                                                <div className="relative group">
+                                                    <select required value={store} onChange={e => setStore(e.target.value)}
+                                                        className="neu-input w-full px-6 py-4 rounded-2xl appearance-none text-slate-700 font-semibold cursor-pointer">
+                                                        <option value="" disabled>Selecione...</option>
+                                                        {STORES_LIST.map((l, i) => <option key={i} value={l}>{l}</option>)}
+                                                    </select>
+                                                    <div className="absolute right-6 top-1/2 -translate-y-1/2 pointer-events-none text-slate-400 group-hover:text-blue-500">
+                                                        <Icons.Store className="w-5 h-5" />
+                                                    </div>
+                                                </div>
+                                            </div>
+
+                                            <div className="space-y-3">
+                                                <label className="text-xs font-bold text-slate-400 uppercase tracking-widest ml-2">Valor ({settings.currency})</label>
+                                                <div className="relative group">
+                                                    <input type="text" inputMode="numeric" required placeholder="0,00" value={amount} onChange={handleAmountChange}
+                                                        className="neu-input w-full pl-6 pr-14 py-4 rounded-2xl text-blue-600 font-black text-xl" />
+                                                     <div className="absolute right-6 top-1/2 -translate-y-1/2 pointer-events-none text-slate-400 group-hover:text-blue-500">
+                                                        <Icons.DollarSign className="w-5 h-5" />
+                                                    </div>
+                                                </div>
+                                            </div>
+
+                                            <div className="space-y-3 md:col-span-2">
+                                                <label className="text-xs font-bold text-slate-400 uppercase tracking-widest ml-2">Observações (Opcional)</label>
+                                                <input type="text" value={notes} onChange={e => setNotes(e.target.value)} placeholder="Ex: Referente a parcela 2..."
+                                                    className="neu-input w-full px-6 py-4 rounded-2xl text-slate-600 font-medium" />
+                                            </div>
+                                        </div>
+
+                                        <button type="submit" className="neu-btn-primary w-full py-5 rounded-[20px] font-bold text-lg mt-6 flex items-center justify-center gap-3">
+                                            {editingId ? <Icons.Check className="w-5 h-5"/> : <Icons.Plus className="w-5 h-5"/>}
+                                            {editingId ? "Salvar Alterações" : "Adicionar Lançamento"}
+                                        </button>
+                                    </form>
+                                </div>
+
+                                {expenses.length > 0 && (
+                                    <div className="neu-panel p-10 print:border-none print:shadow-none print:p-0 print:mb-6">
+                                            <div className="flex flex-col md:flex-row justify-between items-center gap-8 mb-10">
+                                                <div className="text-center md:text-left">
+                                                    <p className="text-xs text-slate-400 uppercase font-bold mb-2 no-print tracking-widest">Total {getTotalTitle()}</p>
+                                                    <p className="text-5xl font-black text-slate-700">
+                                                        <span className="text-2xl text-slate-400 font-bold mr-2 align-top">{settings.currency}</span>
+                                                        {formatCurrency(totalGeneral)}
+                                                    </p>
+                                                </div>
+                                                <div className="flex gap-4 w-full md:w-auto no-print">
+                                                    <button onClick={() => window.print()} className="neu-btn flex-1 md:flex-none justify-center flex items-center gap-3 px-8 py-4 rounded-2xl text-slate-600 font-bold">
+                                                        <Icons.Printer className="w-5 h-5" /> Imprimir
+                                                    </button>
+                                                    <button onClick={exportToCSV} className="neu-btn flex-1 md:flex-none justify-center flex items-center gap-3 px-8 py-4 rounded-2xl text-blue-500 font-bold">
+                                                        <Icons.Download className="w-5 h-5" /> Exportar
+                                                    </button>
+                                                </div>
+                                            </div>
+                                            
+                                            <div className="flex flex-col md:flex-row gap-8 no-print items-end md:items-center">
+                                                <div className="relative flex-1 w-full group">
+                                                    <div className="absolute inset-y-0 left-0 pl-6 flex items-center pointer-events-none">
+                                                        <Icons.Search className="w-5 h-5 text-slate-400" />
+                                                    </div>
+                                                    <input 
+                                                        type="text" 
+                                                        placeholder="Pesquisar lançamentos..." 
+                                                        value={searchTerm}
+                                                        onChange={e => setSearchTerm(e.target.value)}
+                                                        className="neu-input w-full pl-14 pr-6 py-4 rounded-2xl text-sm font-medium text-slate-600 placeholder-slate-400"
+                                                    />
+                                                </div>
+                                                
+                                                <div className="flex flex-wrap gap-4 w-full md:w-auto items-center">
+                                                    {!searchTerm ? (
+                                                        <>
+                                                            <div className="flex gap-2">
+                                                                <button 
+                                                                    onClick={() => setFilterMode('day')}
+                                                                    className={`px-6 py-3 text-xs font-bold rounded-xl transition-all ${filterMode === 'day' ? 'neu-active text-blue-500' : 'neu-btn text-slate-500'}`}
+                                                                >
+                                                                    Dia
+                                                                </button>
+                                                                <button 
+                                                                    onClick={() => setFilterMode('month')}
+                                                                    className={`px-6 py-3 text-xs font-bold rounded-xl transition-all ${filterMode === 'month' ? 'neu-active text-blue-500' : 'neu-btn text-slate-500'}`}
+                                                                >
+                                                                    Mês
+                                                                </button>
+                                                            </div>
+
+                                                            {filterMode === 'day' ? (
+                                                                <div className="flex items-center gap-4 neu-panel p-2 rounded-2xl">
+                                                                    <button 
+                                                                        onClick={handlePrevDate} 
+                                                                        disabled={availableDates.indexOf(selectedDate) <= 0}
+                                                                        className="p-2 text-slate-500 hover:text-blue-500 neu-btn rounded-xl disabled:opacity-30 disabled:cursor-not-allowed"
+                                                                    >
+                                                                        <Icons.ChevronLeft className="w-5 h-5"/>
+                                                                    </button>
+                                                                    
+                                                                    <span className="font-bold text-slate-600 px-2 min-w-[100px] text-center text-sm">
+                                                                        {selectedDate ? formatDateBR(selectedDate) : '...'}
+                                                                    </span>
+                                                                    
+                                                                    <button 
+                                                                        onClick={handleNextDate} 
+                                                                        disabled={availableDates.indexOf(selectedDate) >= availableDates.length - 1}
+                                                                        className="p-2 text-slate-500 hover:text-blue-500 neu-btn rounded-xl disabled:opacity-30 disabled:cursor-not-allowed"
+                                                                    >
+                                                                        <Icons.ChevronRight className="w-5 h-5"/>
+                                                                    </button>
+                                                                </div>
+                                                            ) : (
+                                                                <div className="flex items-center gap-4 neu-panel p-2 rounded-2xl">
+                                                                    <button 
+                                                                        onClick={handlePrevMonthFilter} 
+                                                                        disabled={availableMonths.indexOf(selectedMonth) <= 0}
+                                                                        className="p-2 text-slate-500 hover:text-blue-500 neu-btn rounded-xl disabled:opacity-30 disabled:cursor-not-allowed"
+                                                                    >
+                                                                        <Icons.ChevronLeft className="w-5 h-5"/>
+                                                                    </button>
+                                                                    
+                                                                    <span className="font-bold text-slate-600 px-2 min-w-[120px] text-center text-sm capitalize">
+                                                                        {selectedMonth ? formatMonthBR(selectedMonth) : '...'}
+                                                                    </span>
+                                                                    
+                                                                    <button 
+                                                                        onClick={handleNextMonthFilter} 
+                                                                        disabled={availableMonths.indexOf(selectedMonth) >= availableMonths.length - 1}
+                                                                        className="p-2 text-slate-500 hover:text-blue-500 neu-btn rounded-xl disabled:opacity-30 disabled:cursor-not-allowed"
+                                                                    >
+                                                                        <Icons.ChevronRight className="w-5 h-5"/>
+                                                                    </button>
+                                                                </div>
+                                                            )}
+                                                        </>
+                                                    ) : (
+                                                        <div className="neu-input text-blue-500 px-6 py-4 rounded-2xl text-sm font-bold">
+                                                            Modo Busca Ativo (Global)
+                                                        </div>
+                                                    )}
+
+                                                    <div className="h-8 w-px bg-slate-300 hidden md:block"></div>
+
+                                                    <div className="flex gap-2">
+                                                        <button 
+                                                            onClick={() => setGroupBy('date')}
+                                                            className={`px-6 py-3 text-xs font-bold rounded-xl transition-all ${groupBy === 'date' ? 'neu-active text-blue-500' : 'neu-btn text-slate-500'}`}
+                                                        >
+                                                            Agrupar Data
+                                                        </button>
+                                                        <button 
+                                                            onClick={() => setGroupBy('store')}
+                                                            className={`px-6 py-3 text-xs font-bold rounded-xl transition-all ${groupBy === 'store' ? 'neu-active text-blue-500' : 'neu-btn text-slate-500'}`}
+                                                        >
+                                                            Agrupar Loja
+                                                        </button>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                    </div>
+                                )}
+
+                                {expenses.length > 0 && (
+                                    <div className="space-y-10 print:space-y-6">
+                                            {groupedExpenses.map(group => (
+                                                <div key={group.key} className="print-break-inside-avoid">
+                                                    <div className="flex items-center justify-between mb-6 px-4">
+                                                        <h3 className="text-xl font-bold text-slate-700 flex items-center gap-4">
+                                                            <div className="neu-input p-2 rounded-xl text-blue-500 flex items-center justify-center">
+                                                                {groupBy === 'date' ? <Icons.Calendar className="w-6 h-6 m-1" /> : (
+                                                                    getStoreLogo(group.key, "w-8 h-8")
+                                                                )}
+                                                            </div>
+                                                            {groupBy === 'date' ? formatDateBR(group.key) : group.key}
+                                                        </h3>
+                                                        <span className="text-base font-black text-slate-600 neu-input px-6 py-2 rounded-full">
+                                                            {settings.currency} {formatCurrency(group.total)}
+                                                        </span>
+                                                    </div>
+
+                                                    <div className="neu-panel rounded-3xl overflow-hidden print:shadow-none print:border print:border-slate-300 p-0">
+                                                        <div className="overflow-x-auto max-h-[600px] overflow-y-auto print-scroll-fix">
+                                                            <table className="w-full text-left text-sm relative border-collapse">
+                                                                <thead className="sticky top-0 z-10 bg-[#e0e5ec] shadow-[0_4px_10px_rgba(0,0,0,0.05)] border-b border-white/20">
+                                                                    <tr>
+                                                                        {groupBy === 'date' && <th className="px-8 py-5 font-bold text-slate-400 uppercase text-xs tracking-widest">Loja</th>}
+                                                                        <th className="px-8 py-5 font-bold text-slate-400 uppercase text-xs tracking-widest">Quem</th>
+                                                                        <th className="px-8 py-5 font-bold text-slate-400 uppercase text-xs tracking-widest">Categoria</th>
+                                                                        <th className="px-8 py-5 font-bold text-slate-400 uppercase text-xs tracking-widest">Data</th>
+                                                                        <th className="px-8 py-5 font-bold text-slate-400 uppercase text-xs tracking-widest">Observações</th>
+                                                                        <th className="px-8 py-5 font-bold text-slate-400 uppercase text-xs tracking-widest text-right">Valor</th>
+                                                                        <th className="px-8 py-5 font-bold text-slate-400 uppercase text-xs tracking-widest text-center no-print">Ações</th>
+                                                                    </tr>
+                                                                </thead>
+                                                                <tbody className="divide-y divide-slate-300/30">
+                                                                    {group.items.map((ex, idx) => (
+                                                                        <tr key={ex.id} className="hover:bg-white/30 transition-colors group">
+                                                                            {groupBy === 'date' && (
+                                                                                <td className="px-8 py-6 whitespace-nowrap">
+                                                                                    <div className="flex items-center gap-3">
+                                                                                        {getStoreLogo(ex.store, "w-6 h-6")}
+                                                                                        <span className={`text-xs font-bold text-slate-600`}>
+                                                                                            {ex.store}
+                                                                                        </span>
+                                                                                    </div>
+                                                                                </td>
+                                                                            )}
+                                                                            <td className="px-8 py-6 text-slate-500 font-medium text-sm">{ex.employeeName || settings.employeeName}</td>
+                                                                            <td className="px-8 py-6 text-slate-700 text-sm font-bold">{ex.category}</td>
+                                                                            <td className="px-8 py-6 whitespace-nowrap text-slate-400 font-medium text-sm">
+                                                                                {formatDateBR(ex.date)}
+                                                                            </td>
+                                                                            <td className="px-8 py-6">
+                                                                                <div className="font-medium text-slate-500 leading-tight">
+                                                                                    {ex.notes || ex.description || "-"}
+                                                                                </div>
+                                                                            </td>
+                                                                            <td className="px-8 py-6 text-right font-black text-slate-700 text-base">
+                                                                                {formatCurrency(ex.amount)}
+                                                                            </td>
+                                                                            <td className="px-8 py-6 text-center no-print">
+                                                                                <div className="flex justify-center gap-3 opacity-0 group-hover:opacity-100 transition-all transform translate-y-1 group-hover:translate-y-0">
+                                                                                    <button onClick={() => duplicateExpense(ex)} className="neu-btn p-2 text-slate-400 hover:text-blue-500 rounded-xl" title="Duplicar">
+                                                                                        <Icons.Copy className="w-5 h-5" />
+                                                                                    </button>
+                                                                                    <button onClick={() => startEdit(ex)} className="neu-btn p-2 text-slate-400 hover:text-orange-500 rounded-xl" title="Editar">
+                                                                                        <Icons.Edit className="w-5 h-5" />
+                                                                                    </button>
+                                                                                </div>
+                                                                            </td>
+                                                                        </tr>
+                                                                    ))}
+                                                                </tbody>
+                                                            </table>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            ))}
+                                    </div>
+                                )}
+                                
+                                {expenses.length === 0 && (
+                                    <div className="text-center py-32 rounded-[3rem] neu-input no-print flex flex-col items-center justify-center text-slate-400 m-8">
+                                        <div className="neu-panel p-8 rounded-full mb-6"><Icons.FileSpreadsheet className="w-12 h-12 text-blue-400"/></div>
+                                        <p className="font-bold text-slate-500 text-xl">Nenhum lançamento no banco.</p>
+                                        <button 
+                                            onClick={handleEmptyStateRestore} 
+                                            className="mt-8 px-10 py-5 neu-btn-primary rounded-2xl flex items-center gap-3 text-lg"
+                                        >
+                                            <Icons.CloudUpload className="w-6 h-6" /> Importar Backup
+                                        </button>
+                                    </div>
+                                )}
+                            </>
+                        )}
+                    </div>
+
+                    {showBackupOptions && (
+                         <div className="fixed inset-0 z-[100] flex items-center justify-center bg-slate-900/40 backdrop-blur-md p-4 animate-in fade-in zoom-in no-print">
+                            <div className="neu-panel w-full max-w-sm overflow-hidden relative p-10 text-center">
+                                <div className="mx-auto w-20 h-20 neu-input rounded-3xl flex items-center justify-center mb-8 text-blue-500">
+                                    <Icons.Save className="w-10 h-10" />
+                                </div>
+                                <h3 className="text-2xl font-black text-slate-700 mb-3">Salvar Backup</h3>
+                                <p className="text-base text-slate-500 mb-10 font-medium">Como deseja salvar seus dados?</p>
+                                
+                                <div className="grid grid-cols-1 gap-6">
+                                    <button onClick={saveToComputer} className="neu-btn w-full py-5 text-slate-600 font-bold rounded-2xl flex items-center justify-center gap-4 text-lg">
+                                        <Icons.HardDrive className="w-6 h-6 text-slate-400" />
+                                        <span>No Computador</span>
+                                    </button>
+
+                                    <button onClick={saveToCloud} className="neu-btn w-full py-5 text-blue-600 font-bold rounded-2xl flex items-center justify-center gap-4 text-lg">
+                                        <Icons.CloudUpload className="w-6 h-6" />
+                                        <span>Salvar Nuvem</span>
+                                    </button>
+                                </div>
+
+                                <button onClick={() => setShowBackupOptions(false)} className="mt-10 text-slate-400 hover:text-slate-600 font-bold uppercase tracking-widest text-sm">
+                                    Cancelar
+                                </button>
+                            </div>
+                        </div>
+                    )}
+                    
+                    {isSettingsOpen && (
+                        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/40 backdrop-blur-md no-print">
+                            <div className="neu-panel w-full max-w-md overflow-hidden flex flex-col max-h-[90vh]">
+                                <div className="p-8 pb-6 flex justify-between items-center">
+                                    <h3 className="text-2xl font-black text-slate-700 flex items-center gap-4">
+                                        <div className="p-3 neu-input rounded-2xl text-blue-500"><Icons.Settings className="w-6 h-6"/></div>
+                                        Ajustes
+                                    </h3>
+                                    <button onClick={() => setIsSettingsOpen(false)} className="text-slate-400 hover:text-slate-600 neu-btn p-3 rounded-2xl">
+                                        <Icons.X className="w-6 h-6" />
+                                    </button>
+                                </div>
+                                
+                                <div className="p-8 space-y-10 overflow-y-auto">
+                                    <div className="space-y-4">
+                                        <h4 className="text-sm font-bold text-slate-400 uppercase tracking-widest">Identificação</h4>
+                                        <div>
+                                            <input type="text" placeholder="Nome do Funcionário" value={settings.employeeName} onChange={e => setSettings({...settings, employeeName: e.target.value})} 
+                                                className="neu-input w-full p-5 rounded-2xl font-bold text-slate-700 text-lg" />
+                                        </div>
+                                    </div>
+
+                                    <div className="space-y-4 pt-4">
+                                        <h4 className="text-sm font-bold text-slate-400 uppercase tracking-widest">Backup do PC</h4>
+                                        
+                                        <div>
+                                            <button onClick={triggerRestore} className="flex items-center justify-center gap-3 w-full py-5 neu-btn text-slate-600 font-bold rounded-2xl text-lg">
+                                                <Icons.Upload className="w-6 h-6" /> Restaurar Arquivo
+                                            </button>
+                                            <input type="file" ref={fileInputRef} onChange={handleRestoreFile} accept=".json" className="hidden" />
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                                <div className="p-8 pt-4">
+                                    <button onClick={() => setIsSettingsOpen(false)} className="w-full py-5 neu-btn-primary font-bold rounded-2xl text-lg">
+                                        Concluir
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    )}
+                </div>
+            );
+        };
+
+        const root = ReactDOM.createRoot(document.getElementById('root'));
+        root.render(<App />);
+    </script>
+</body>
+</html>
