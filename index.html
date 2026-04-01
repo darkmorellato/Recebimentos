@@ -1,0 +1,25 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+  <head>
+    <meta charset="UTF-8" />
+    <link rel="icon" type="image/x-icon" href="/images/favicon/favicon.ico" />
+    <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon/favicon-32x32.png" />
+    <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon/favicon-16x16.png" />
+    <link rel="apple-touch-icon" sizes="180x180" href="/images/favicon/apple-touch-icon.png" />
+    <link rel="manifest" href="/images/favicon/site.webmanifest" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+    <meta name="theme-color" content="#2563eb" />
+    <meta name="description" content="Sistema de controle de recebimentos Payjoy e Crefaz" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="default" />
+    <meta name="apple-mobile-web-app-title" content="Miplace Pay" />
+    <title>Miplace Pay - Recebimentos</title>
+    <script>
+      if(localStorage.getItem('miplace_theme')==='dark'||(!localStorage.getItem('miplace_theme')&&window.matchMedia('(prefers-color-scheme:dark)').matches)){document.documentElement.classList.add('dark')}
+    </script>
+  </head>
+  <body>
+    <div id="root"></div>
+    <script type="module" src="/src/main.tsx"></script>
+  </body>
+</html>
